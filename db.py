@@ -1,13 +1,19 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "expenses.db")
+# Use /tmp on Render (writable), or local directory for development
+if os.environ.get("RENDER"):
+    DB_PATH = "/tmp/expenses.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "expenses.db")
+
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
 
 def init_db():
     conn = get_connection()

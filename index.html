@@ -38,7 +38,6 @@
     overflow-x: hidden;
   }
 
-  /* ── Background texture ── */
   body::before {
     content: '';
     position: fixed;
@@ -58,7 +57,6 @@
     padding: 40px 24px;
   }
 
-  /* ── Header ── */
   header {
     text-align: center;
     margin-bottom: 48px;
@@ -80,7 +78,6 @@
     font-size: 1.05rem;
   }
 
-  /* ── Summary Cards ── */
   .summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -119,7 +116,6 @@
   .summary-card .value.count { color: var(--green); }
   .summary-card .value.top-cat { color: var(--orange); font-size: 1.4rem; }
 
-  /* ── Main Layout ── */
   .main-grid {
     display: grid;
     grid-template-columns: 380px 1fr;
@@ -131,7 +127,6 @@
     .main-grid { grid-template-columns: 1fr; }
   }
 
-  /* ── Form Panel ── */
   .panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -241,7 +236,6 @@
     border-color: var(--red);
   }
 
-  /* ── Filter Bar ── */
   .filter-bar {
     display: flex;
     gap: 12px;
@@ -282,7 +276,6 @@
     border-color: var(--text-dim);
   }
 
-  /* ── Expense Table ── */
   .expense-table {
     width: 100%;
     border-collapse: collapse;
@@ -336,7 +329,6 @@
   .empty-state .emoji { font-size: 2.5rem; margin-bottom: 12px; }
   .empty-state p { font-size: 0.95rem; }
 
-  /* ── Category Chart ── */
   .chart-section {
     margin-top: 32px;
   }
@@ -393,7 +385,6 @@
     flex-shrink: 0;
   }
 
-  /* ── Toast ── */
   .toast {
     position: fixed;
     bottom: 24px;
@@ -421,7 +412,6 @@
     box-shadow: 0 8px 32px rgba(225,112,85,0.3);
   }
 
-  /* ── Animations ── */
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
@@ -445,7 +435,6 @@
     <p>Track where your money goes</p>
   </header>
 
-  <!-- Summary Cards -->
   <div class="summary-grid" id="summaryCards">
     <div class="summary-card fade-in fade-in-1">
       <div class="label">Total Spent</div>
@@ -461,10 +450,7 @@
     </div>
   </div>
 
-  <!-- Main Layout -->
   <div class="main-grid">
-
-    <!-- Left: Add Expense Form -->
     <div class="panel fade-in fade-in-2">
       <h2>
         <span class="icon" style="background: var(--accent-glow); color: var(--accent);">+</span>
@@ -493,12 +479,9 @@
       </form>
     </div>
 
-    <!-- Right: Expense List + Chart -->
     <div>
       <div class="panel fade-in fade-in-3">
         <h2>Expenses</h2>
-
-        <!-- Filters -->
         <div class="filter-bar">
           <select id="filterCategory">
             <option value="">All Categories</option>
@@ -507,12 +490,9 @@
           <input type="date" id="filterEnd" title="End date">
           <button class="btn btn-clear" onclick="clearFilters()">Clear</button>
         </div>
-
-        <!-- Table -->
         <div id="expenseList"></div>
       </div>
 
-      <!-- Category Breakdown Chart -->
       <div class="panel chart-section fade-in fade-in-4" id="chartSection" style="display:none;">
         <h2>Spending by Category</h2>
         <div id="chartBars"></div>
@@ -521,11 +501,13 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-  const API = 'http://localhost:8080';
+  // Auto-detect: if opened from file:// use localhost, otherwise use same origin
+  const API = window.location.protocol === 'file:'
+    ? 'http://localhost:8080'
+    : window.location.origin;
 
   const CATEGORY_COLORS = {
     'Food':          'var(--orange)',
@@ -543,7 +525,6 @@
     return CATEGORY_COLORS[cat] || 'var(--accent)';
   }
 
-  // ── Toast ──
   function showToast(msg, isError = false) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -551,18 +532,14 @@
     setTimeout(() => t.className = 'toast', 2500);
   }
 
-  // ── Load Categories ──
   async function loadCategories() {
     try {
       const res = await fetch(`${API}/categories`);
       const cats = await res.json();
       const sel = document.getElementById('category');
       const filter = document.getElementById('filterCategory');
-
-      // Keep first option
       sel.innerHTML = '<option value="">Select category...</option>';
       filter.innerHTML = '<option value="">All Categories</option>';
-
       cats.forEach(c => {
         sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
         filter.innerHTML += `<option value="${c.name}">${c.name}</option>`;
@@ -572,17 +549,14 @@
     }
   }
 
-  // ── Load Expenses ──
   async function loadExpenses() {
     const cat = document.getElementById('filterCategory').value;
     const start = document.getElementById('filterStart').value;
     const end = document.getElementById('filterEnd').value;
-
     let url = `${API}/expenses?`;
     if (cat) url += `category=${encodeURIComponent(cat)}&`;
     if (start) url += `start_date=${start}&`;
     if (end) url += `end_date=${end}&`;
-
     try {
       const res = await fetch(url);
       const expenses = await res.json();
@@ -592,10 +566,8 @@
     }
   }
 
-  // ── Render Expense Table ──
   function renderExpenses(expenses) {
     const container = document.getElementById('expenseList');
-
     if (expenses.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -604,7 +576,6 @@
         </div>`;
       return;
     }
-
     let html = `
       <table class="expense-table">
         <thead>
@@ -617,19 +588,16 @@
           </tr>
         </thead>
         <tbody>`;
-
     expenses.forEach(e => {
       const color = getColor(e.category);
       const dateStr = new Date(e.date + 'T00:00:00').toLocaleDateString('en-IN', {
         day: 'numeric', month: 'short', year: 'numeric'
       });
-
       html += `
         <tr>
           <td style="color: var(--text-dim); font-size:0.85rem;">${dateStr}</td>
           <td>
-            <span class="category-badge"
-              style="background: ${color}22; color: ${color};">
+            <span class="category-badge" style="background: ${color}22; color: ${color};">
               ${e.category}
             </span>
           </td>
@@ -640,89 +608,72 @@
           </td>
         </tr>`;
     });
-
     html += '</tbody></table>';
     container.innerHTML = html;
   }
 
-  // ── Load Summary ──
   async function loadSummary() {
     try {
       const res = await fetch(`${API}/expenses/summary`);
       const data = await res.json();
-
       document.getElementById('totalSpent').textContent =
         '₹' + (data.grand_total || 0).toLocaleString('en-IN');
       document.getElementById('totalCount').textContent = data.total_count || 0;
-
       if (data.by_category.length > 0) {
         document.getElementById('topCategory').textContent = data.by_category[0].category;
       } else {
         document.getElementById('topCategory').textContent = '—';
       }
-
       renderChart(data.by_category);
     } catch (e) {
       console.error('Summary error:', e);
     }
   }
 
-  // ── Render Bar Chart ──
   function renderChart(categories) {
     const section = document.getElementById('chartSection');
     const container = document.getElementById('chartBars');
-
     if (categories.length === 0) {
       section.style.display = 'none';
       return;
     }
-
     section.style.display = 'block';
     const max = categories[0].total;
     let html = '';
-
     categories.forEach(c => {
       const pct = (c.total / max) * 100;
       const color = getColor(c.category);
-
       html += `
         <div class="chart-bar-row">
           <div class="chart-bar-label" style="color: ${color}">${c.category}</div>
           <div class="chart-bar-track">
-            <div class="chart-bar-fill"
-              style="width: ${pct}%; background: ${color};">
+            <div class="chart-bar-fill" style="width: ${pct}%; background: ${color};">
               ${c.count} expense${c.count !== 1 ? 's' : ''}
             </div>
           </div>
           <div class="chart-bar-amount" style="color: ${color}">₹${c.total.toLocaleString('en-IN')}</div>
         </div>`;
     });
-
     container.innerHTML = html;
   }
 
-  // ── Add Expense ──
   document.getElementById('expenseForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const body = {
       amount: parseFloat(document.getElementById('amount').value),
       category: document.getElementById('category').value,
       description: document.getElementById('description').value,
       date: document.getElementById('date').value
     };
-
     try {
       const res = await fetch(`${API}/expenses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-
       if (res.ok) {
         showToast(`Added ₹${body.amount} for ${body.category}`);
         document.getElementById('expenseForm').reset();
-        // Reset date to today
         document.getElementById('date').value = new Date().toISOString().split('T')[0];
         loadExpenses();
         loadSummary();
@@ -735,10 +686,8 @@
     }
   });
 
-  // ── Delete Expense ──
   async function deleteExpense(id) {
     if (!confirm('Delete this expense?')) return;
-
     try {
       const res = await fetch(`${API}/expenses/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -751,7 +700,6 @@
     }
   }
 
-  // ── Filters ──
   document.getElementById('filterCategory').addEventListener('change', loadExpenses);
   document.getElementById('filterStart').addEventListener('change', loadExpenses);
   document.getElementById('filterEnd').addEventListener('change', loadExpenses);
@@ -763,7 +711,6 @@
     loadExpenses();
   }
 
-  // ── Init ──
   document.getElementById('date').value = new Date().toISOString().split('T')[0];
   loadCategories();
   loadExpenses();
