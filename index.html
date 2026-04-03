@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242835;
+    --border: #2e3345;
+    --text: #e8e9ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108, 92, 231, 0.25);
+    --green: #00b894;
+    --red: #e17055;
+    --orange: #fdcb6e;
+    --blue: #74b9ff;
+    --pink: #fd79a8;
+    --teal: #00cec9;
+    --yellow: #ffeaa7;
+    --purple: #a29bfe;
+    --coral: #fab1a0;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(108,92,231,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(0,184,148,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+  }
+
+  /* ── Summary Cards ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .summary-card .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .summary-card .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+  }
+
+  .summary-card .value.total { color: var(--accent); }
+  .summary-card .value.count { color: var(--green); }
+  .summary-card .value.top-cat { color: var(--orange); font-size: 1.4rem; }
+
+  /* ── Main Layout ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Form Panel ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+  }
+
+  .panel h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel h2 .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .form-group select { cursor: pointer; }
+  .form-group select option { background: var(--surface2); }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #8b7cf7);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px var(--accent-glow);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-delete {
+    background: transparent;
+    color: var(--red);
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    border: 1px solid rgba(225,112,85,0.3);
+  }
+
+  .btn-delete:hover {
+    background: rgba(225,112,85,0.1);
+    border-color: var(--red);
+  }
+
+  /* ── Filter Bar ── */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .filter-bar select,
+  .filter-bar input {
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .filter-bar select:focus,
+  .filter-bar input:focus {
+    border-color: var(--accent);
+  }
+
+  .filter-bar select option { background: var(--surface2); }
+
+  .btn-clear {
+    background: transparent;
+    color: var(--text-dim);
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border);
+  }
+
+  .btn-clear:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
+
+  /* ── Expense Table ── */
+  .expense-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .expense-table thead th {
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .expense-table tbody tr {
+    transition: background 0.15s;
+  }
+
+  .expense-table tbody tr:hover {
+    background: rgba(108,92,231,0.04);
+  }
+
+  .expense-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(46,51,69,0.5);
+    font-size: 0.92rem;
+    vertical-align: middle;
+  }
+
+  .expense-table .amount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .category-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-dim);
+  }
+
+  .empty-state .emoji { font-size: 2.5rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.95rem; }
+
+  /* ── Category Chart ── */
+  .chart-section {
+    margin-top: 32px;
+  }
+
+  .chart-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .chart-bar-label {
+    width: 110px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .chart-bar-track {
+    flex: 1;
+    height: 28px;
+    background: var(--surface2);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .chart-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(0,0,0,0.7);
+    min-width: fit-content;
+  }
+
+  .chart-bar-amount {
+    width: 90px;
+    text-align: right;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--green);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 32px rgba(0,184,148,0.3);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 100;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .toast.error {
+    background: var(--red);
+    box-shadow: 0 8px 32px rgba(225,112,85,0.3);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in {
+    animation: fadeInUp 0.5s ease forwards;
+  }
+
+  .fade-in-1 { animation-delay: 0.05s; opacity: 0; }
+  .fade-in-2 { animation-delay: 0.1s; opacity: 0; }
+  .fade-in-3 { animation-delay: 0.15s; opacity: 0; }
+  .fade-in-4 { animation-delay: 0.2s; opacity: 0; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="fade-in">
+    <h1>Expense Tracker</h1>
+    <p>Track where your money goes</p>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid" id="summaryCards">
+    <div class="summary-card fade-in fade-in-1">
+      <div class="label">Total Spent</div>
+      <div class="value total" id="totalSpent">₹0</div>
+    </div>
+    <div class="summary-card fade-in fade-in-2">
+      <div class="label">Expenses</div>
+      <div class="value count" id="totalCount">0</div>
+    </div>
+    <div class="summary-card fade-in fade-in-3">
+      <div class="label">Top Category</div>
+      <div class="value top-cat" id="topCategory">—</div>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="main-grid">
+
+    <!-- Left: Add Expense Form -->
+    <div class="panel fade-in fade-in-2">
+      <h2>
+        <span class="icon" style="background: var(--accent-glow); color: var(--accent);">+</span>
+        Add Expense
+      </h2>
+      <form id="expenseForm">
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" id="amount" placeholder="0.00" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="category" required>
+            <option value="">Select category...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="description" placeholder="What did you spend on?" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="date" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Expense</button>
+      </form>
+    </div>
+
+    <!-- Right: Expense List + Chart -->
+    <div>
+      <div class="panel fade-in fade-in-3">
+        <h2>Expenses</h2>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <select id="filterCategory">
+            <option value="">All Categories</option>
+          </select>
+          <input type="date" id="filterStart" title="Start date">
+          <input type="date" id="filterEnd" title="End date">
+          <button class="btn btn-clear" onclick="clearFilters()">Clear</button>
+        </div>
+
+        <!-- Table -->
+        <div id="expenseList"></div>
+      </div>
+
+      <!-- Category Breakdown Chart -->
+      <div class="panel chart-section fade-in fade-in-4" id="chartSection" style="display:none;">
+        <h2>Spending by Category</h2>
+        <div id="chartBars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8080';
+
+  const CATEGORY_COLORS = {
+    'Food':          'var(--orange)',
+    'Transport':     'var(--blue)',
+    'Housing':       'var(--purple)',
+    'Utilities':     'var(--teal)',
+    'Entertainment': 'var(--pink)',
+    'Health':        'var(--green)',
+    'Shopping':      'var(--coral)',
+    'Education':     'var(--yellow)',
+    'Other':         'var(--text-dim)',
+  };
+
+  function getColor(cat) {
+    return CATEGORY_COLORS[cat] || 'var(--accent)';
+  }
+
+  // ── Toast ──
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.className = 'toast', 2500);
+  }
+
+  // ── Load Categories ──
+  async function loadCategories() {
+    try {
+      const res = await fetch(`${API}/categories`);
+      const cats = await res.json();
+      const sel = document.getElementById('category');
+      const filter = document.getElementById('filterCategory');
+
+      // Keep first option
+      sel.innerHTML = '<option value="">Select category...</option>';
+      filter.innerHTML = '<option value="">All Categories</option>';
+
+      cats.forEach(c => {
+        sel.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+        filter.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+      });
+    } catch (e) {
+      showToast('Cannot connect to API. Is the server running?', true);
+    }
+  }
+
+  // ── Load Expenses ──
+  async function loadExpenses() {
+    const cat = document.getElementById('filterCategory').value;
+    const start = document.getElementById('filterStart').value;
+    const end = document.getElementById('filterEnd').value;
+
+    let url = `${API}/expenses?`;
+    if (cat) url += `category=${encodeURIComponent(cat)}&`;
+    if (start) url += `start_date=${start}&`;
+    if (end) url += `end_date=${end}&`;
+
+    try {
+      const res = await fetch(url);
+      const expenses = await res.json();
+      renderExpenses(expenses);
+    } catch (e) {
+      showToast('Failed to load expenses', true);
+    }
+  }
+
+  // ── Render Expense Table ──
+  function renderExpenses(expenses) {
+    const container = document.getElementById('expenseList');
+
+    if (expenses.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="emoji">📭</div>
+          <p>No expenses yet. Add your first one!</p>
+        </div>`;
+      return;
+    }
+
+    let html = `
+      <table class="expense-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th style="text-align:right">Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    expenses.forEach(e => {
+      const color = getColor(e.category);
+      const dateStr = new Date(e.date + 'T00:00:00').toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      });
+
+      html += `
+        <tr>
+          <td style="color: var(--text-dim); font-size:0.85rem;">${dateStr}</td>
+          <td>
+            <span class="category-badge"
+              style="background: ${color}22; color: ${color};">
+              ${e.category}
+            </span>
+          </td>
+          <td>${e.description || '—'}</td>
+          <td class="amount" style="text-align:right; color: ${color}">₹${e.amount.toLocaleString('en-IN')}</td>
+          <td>
+            <button class="btn btn-delete" onclick="deleteExpense(${e.id})">Delete</button>
+          </td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  // ── Load Summary ──
+  async function loadSummary() {
+    try {
+      const res = await fetch(`${API}/expenses/summary`);
+      const data = await res.json();
+
+      document.getElementById('totalSpent').textContent =
+        '₹' + (data.grand_total || 0).toLocaleString('en-IN');
+      document.getElementById('totalCount').textContent = data.total_count || 0;
+
+      if (data.by_category.length > 0) {
+        document.getElementById('topCategory').textContent = data.by_category[0].category;
+      } else {
+        document.getElementById('topCategory').textContent = '—';
+      }
+
+      renderChart(data.by_category);
+    } catch (e) {
+      console.error('Summary error:', e);
+    }
+  }
+
+  // ── Render Bar Chart ──
+  function renderChart(categories) {
+    const section = document.getElementById('chartSection');
+    const container = document.getElementById('chartBars');
+
+    if (categories.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+    const max = categories[0].total;
+    let html = '';
+
+    categories.forEach(c => {
+      const pct = (c.total / max) * 100;
+      const color = getColor(c.category);
+
+      html += `
+        <div class="chart-bar-row">
+          <div class="chart-bar-label" style="color: ${color}">${c.category}</div>
+          <div class="chart-bar-track">
+            <div class="chart-bar-fill"
+              style="width: ${pct}%; background: ${color};">
+              ${c.count} expense${c.count !== 1 ? 's' : ''}
+            </div>
+          </div>
+          <div class="chart-bar-amount" style="color: ${color}">₹${c.total.toLocaleString('en-IN')}</div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+  }
+
+  // ── Add Expense ──
+  document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const body = {
+      amount: parseFloat(document.getElementById('amount').value),
+      category: document.getElementById('category').value,
+      description: document.getElementById('description').value,
+      date: document.getElementById('date').value
+    };
+
+    try {
+      const res = await fetch(`${API}/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        showToast(`Added ₹${body.amount} for ${body.category}`);
+        document.getElementById('expenseForm').reset();
+        // Reset date to today
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+        loadExpenses();
+        loadSummary();
+      } else {
+        const err = await res.json();
+        showToast(err.details ? err.details.join(', ') : err.error, true);
+      }
+    } catch (e) {
+      showToast('Failed to add expense', true);
+    }
+  });
+
+  // ── Delete Expense ──
+  async function deleteExpense(id) {
+    if (!confirm('Delete this expense?')) return;
+
+    try {
+      const res = await fetch(`${API}/expenses/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Expense deleted');
+        loadExpenses();
+        loadSummary();
+      }
+    } catch (e) {
+      showToast('Failed to delete', true);
+    }
+  }
+
+  // ── Filters ──
+  document.getElementById('filterCategory').addEventListener('change', loadExpenses);
+  document.getElementById('filterStart').addEventListener('change', loadExpenses);
+  document.getElementById('filterEnd').addEventListener('change', loadExpenses);
+
+  function clearFilters() {
+    document.getElementById('filterCategory').value = '';
+    document.getElementById('filterStart').value = '';
+    document.getElementById('filterEnd').value = '';
+    loadExpenses();
+  }
+
+  // ── Init ──
+  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+  loadCategories();
+  loadExpenses();
+  loadSummary();
+</script>
+
+</body>
+</html>
